@@ -7,14 +7,9 @@ More info in https://www.vpnuniversity.com/learn/how-vpn-encryption-works
 
 ## Current Usage:
 
-### Server start
 
 ```shell
-python main.py -S
+python main.py
 ```
 
-### Client start
-
-```shell
-python main.py -C
-```
+Run a server app and then run again to start client. (Otherwise there will be a no response exception)
