@@ -12,12 +12,14 @@ import struct
 
 def do_client():
     print("doing client")
+    #TODO IP and port will be inputted by TA in GUI
     TCP_IP = '127.0.0.1'
     TCP_PORT = 5005
     BUFFER_SIZE = 4096
     INIT_MESSAGE = "I_AM_CLIENT"
 
     # get shared secret
+    # TODO this is inputted by the TA in GUI
     file_in = open("keys/shared-secret.bin", "rb")
     secret_key = file_in.read(32)
     file_in.close()

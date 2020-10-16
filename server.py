@@ -38,9 +38,10 @@ def do_server():
             print("authenticated client") 
             # get nonce value
             (nonce, ) = struct.unpack(">i", plaintext[0:4])
-            print(nonce)
+            # print('nonce', plaintext[0:4])
+
             # get session key
-            session_key = plaintext[5:]
+            session_key = plaintext[4:]
 
             # return nonce + 1            
             auth_return = struct.pack(">ix", int(nonce) + 1)
