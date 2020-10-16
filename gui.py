@@ -1,4 +1,6 @@
 import tkinter as tk
+import server
+import client
 
 LARGE_FONT = ("Verdana", 12)
 
@@ -46,33 +48,33 @@ class ClientPage(tk.Frame):
         # ____________________________
 
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Client Mode", font=LARGE_FONT)
-        label.grid(row=0, column=0)
+        self.label = tk.Label(self, text="Client Mode", font=LARGE_FONT)
+        self.label.grid(row=0, column=0)
 
         label1 = tk.Label(self, text="IP Address")
         label2 = tk.Label(self, text="Port #")
         label3 = tk.Label(self, text="Shared Secret Value")
-        label4 = tk.Label(self, text="Data to be sent")
+        #label4 = tk.Label(self, text="Data to be sent")
         self.entries = {}
         entry1 = tk.Entry(self)
         entry2 = tk.Entry(self)
         entry3 = tk.Entry(self)
-        entry4 = tk.Entry(self)
+        #entry4 = tk.Entry(self)
 
         self.entries[0] = entry1
         self.entries[1] = entry2
         self.entries[2] = entry3
-        self.entries[3] = entry4
+        #self.entries[3] = entry4
 
         label1.grid(row=1, column=0)
         label2.grid(row=2, column=0)
         label3.grid(row=3, column=0)
-        label4.grid(row=4, column=0)
+        #label4.grid(row=4, column=0)
 
         entry1.grid(row=1, column=1)
         entry2.grid(row=2, column=1)
         entry3.grid(row=3, column=1)
-        entry4.grid(row=4, column=1)
+        #entry4.grid(row=4, column=1)
 
         #label.grid(pady=10, padx=10)
 
@@ -80,21 +82,33 @@ class ClientPage(tk.Frame):
                                   command=lambda: controller.show_frame("Server"))
         switch_button.grid(row=5, column=0)
 
-        send_button = tk.Button(self, text="Send", command=self.send)
-        send_button.grid(row=5, column=1)
+        self.proceed_button = tk.Button(
+            self, text="Continue", command=self.connect)
+        self.proceed_button.grid(row=5, column=1)
         close_button = tk.Button(self, text="Close",
                                  command=controller.quit)
         close_button.grid(row=5, column=2)
 
-    def send(self):
-        print("HERE")
-        # print(self.entries[0].get())
+    def connect(self):
         self.IP_adr = self.entries[0].get()
         self.port = self.entries[1].get()
-
-        print(self.IP_adr)
-
+        self.secret_value = self.entries[2].get()
+        print(self.secret_value)
+        connected = 1
         # Call the do_client function
+        # connected = client.do_client()
+
+        if(connected):
+            print("HERE")
+            label4 = tk.Label(self, text="Data to be sent")
+            entry4 = tk.Entry(self)
+            self.entries[3] = entry4
+            label4.grid(row=4, column=0)
+            entry4.grid(row=4, column=1)
+            self.label.config(text="Client Mode - Connected")
+            self.proceed_button.config(text="Send")
+
+        return connected
 
 
 class ServerPage(tk.Frame):
