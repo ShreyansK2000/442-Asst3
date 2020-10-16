@@ -20,11 +20,11 @@ class Server:
     def do_server(self, TCP_PORT=5005, secret_key=None):
         if secret_key is None:
             print("Did not get secret key input, screw you too")
-            return (ERR_NO_SECRET_KEY, "No Secret Key")
+            return ERR_NO_SECRET_KEY, "No Secret Key"
 
         INIT_MESSAGE = "I_AM_CLIENT"
 
-        self.secret_key = secret_key
+        self.secret_key = secret_key.encode('utf-8')
         # # get shared secret
         # file_in = open("keys/shared-secret.bin", "rb")
         # secret_key = file_in.read(32)
@@ -46,7 +46,7 @@ class Server:
                     print("Received connection request")
                     data = conn.recv(BUFFER_SIZE)
                     timestamp = int(time()) 
-                    cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+                    cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
                     plaintext = cipher.decrypt(data)
                     print("authenticated client") 
                     # get nonce value
@@ -54,23 +54,25 @@ class Server:
                     # print('nonce', plaintext[0:4])
 
                     # get session key
-                    self.session_key = plaintext[4:]
+                    self.session_key = plaintext[5:]
+                    print('server session key', self.session_key)
+                    print('session key size', sys.getsizeof(self.session_key))
 
                     # return nonce + 1            
                     auth_return = struct.pack(">ix", int(nonce) + 1)
                     timestamp = int(time()) 
-                    cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+                    cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
                     ciphertext = cipher.encrypt(auth_return)
                     conn.send(ciphertext)
                     self.cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
                     self.client_connection = conn
                     self.client_addr = addr
                     # break   # break means authenticated on both side
-                    return (OK_AUTHENTICATED, "Client Auth OK")
+                    return OK_AUTHENTICATED, "Client Auth OK"
             
         except socket.error as error:
             print(error)
-            return (ERR_SOCKET_EXCEPTION, error)
+            return ERR_SOCKET_EXCEPTION, error
 
 
     def send_data(self, data_to_send=None):
@@ -87,7 +89,7 @@ class Server:
             return INVALID_DATA
 
         ciphertext = self.cipher.encrypt(data_to_send.encode('utf-8'))
-        self.comm_socket.send(ciphertext)
+        self.client_connection.send(ciphertext)
     
     def receive_data(self):
 
@@ -97,7 +99,9 @@ class Server:
 
     
         recv_data = self.client_connection.recv(BUFFER_SIZE)
-        self.cipher.decrypt(recv_data)
-        return recv_data.decode('utf-8')
+        print('server received ciphertext: ', recv_data)
+        res = self.cipher.decrypt(recv_data)
+        print('server received plaintext: ', res)
+        return res
     
     # conn.close()

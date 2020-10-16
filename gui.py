@@ -100,8 +100,11 @@ class ClientPage(tk.Frame):
 
         # Call the do_client function
         self.client = Client()
-        self.status, message = self.client.establish_connection(self.ip_adr, self.port, self.secret_value)
-
+        print("return value from client:",self.client.establish_connection(self.ip_adr, self.port, self.secret_value))
+        # self.status, message = self.client.establish_connection(self.ip_adr, self.port, self.secret_value)
+        
+        self.status = 0
+        message = "FML"
         label4 = tk.Label(self, text="")
         label4.grid(row=4, column=0)
         if(self.status == OK_AUTHENTICATED):
@@ -113,6 +116,7 @@ class ClientPage(tk.Frame):
             #label4.grid(row=4, column=0)
             entry4.grid(row=4, column=1)
             recvThread = threading.Thread(target=self.recv)
+            recvThread.start()
             self.label.config(text="Client Mode - Connected")
             self.proceed_button.config(text="Send", command=self.send)
         else:
@@ -134,7 +138,7 @@ class ClientPage(tk.Frame):
         label6.grid(row=5, column=1)
         while True:
             received_val = self.client.receive_data()
-            print(received_val)
+            # print(received_val)
             # TODO update GUI label with received_val
             label6.config(text=str(received_val))
             
@@ -178,8 +182,8 @@ class ServerPage(tk.Frame):
         self.port = self.entries[0].get()
         self.secret_value = self.entries[1].get()
 
-        server = Server()
-        self.status, message = server.do_server(self.port, self.secret_value)
+        self.server = Server()
+        self.status, message = self.server.do_server(self.port, self.secret_value)
 
         label3 = tk.Label(self, text="")
         label3.grid(row=3, column=0)
@@ -188,10 +192,11 @@ class ServerPage(tk.Frame):
             #label4 = tk.Label(self, text="Data to be sent")
             label3.config(text="Data to be sent")
             entry3 = tk.Entry(self)
-            self.entries[3] = entry3
+            self.entries[2] = entry3
             #label4.grid(row=4, column=0)
             entry3.grid(row=3, column=1)
             recvThread = threading.Thread(target=self.recv)
+            recvThread.start()
             self.label.config(text="Server Mode - Connected")
             self.proceed_button.config(text="Send", command=self.send)
         else:
@@ -211,7 +216,7 @@ class ServerPage(tk.Frame):
         label5.grid(row=4, column=1)
         while True:
             received_val = self.server.receive_data()
-            print(received_val)
+            # print(received_val)
             # TODO update GUI label with received_val
             label5.config(text=str(received_val))
 

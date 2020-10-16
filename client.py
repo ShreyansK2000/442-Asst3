@@ -21,11 +21,11 @@ class Client():
 
         if secret_key is None:
             print("Did not get secret key input, screw you too")
-            return (ERR_NO_SECRET_KEY, "No Secret Key")
+            return ERR_NO_SECRET_KEY, "No Secret Key"
 
         self.TCP_IP = TCP_IP
         self.TCP_PORT = int(TCP_PORT)
-        self.secret_key = secret_key
+        self.secret_key = secret_key.encode('utf-8')
         
         INIT_MESSAGE = "I_AM_CLIENT"
 
@@ -36,7 +36,7 @@ class Client():
         # file_in.close()
 
         
-        print(secret_key)
+        print('client app printing secret key', self.secret_key)
 
         # connect socket
         self.comm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -48,12 +48,14 @@ class Client():
             timestamp = int(time())
             # generate session key
             self.session_key = get_random_bytes(32)
+            print('client session key', self.session_key)
+
             # encrypt bytestream
             print("timestamp: " + str(timestamp))
             auth_msg = struct.pack(">ix", timestamp) + self.session_key
             print(self.session_key)
             # print("num bytes: " + str(struct.pack(">i", timestamp).size))
-            cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+            cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
             ciphertext = cipher.encrypt(auth_msg)
 
             # send id message
@@ -64,20 +66,20 @@ class Client():
             # get nonce back
             data = self.comm_socket.recv(BUFFER_SIZE)
             timestamp = int(time())
-            cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+            cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
             plaintext = cipher.decrypt(data)
             (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
             # time skew? offer 3 seconds???
-            if ret_timestamp == timestamp + 3:
+            if ret_timestamp <= timestamp + 3:
                 print("authenticated server")
                 self.cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
-                return (OK_AUTHENTICATED, "Server Auth OK")
+                return OK_AUTHENTICATED, "Server Auth OK"
             # TODO: what happens if not authenticated?
 
             print(ret_timestamp)
         except socket.error as error:
             print(error)
-            return (ERR_SOCKET_EXCEPTION, error)
+            return ERR_SOCKET_EXCEPTION, error
 
             # TODO move this to after comm is finished
             # self.comm_socket.close()
@@ -96,7 +98,10 @@ class Client():
             print("Data too large. Please keep less than 4096 bytes")
             return INVALID_DATA
 
+        client_to_send = data_to_send.encode('utf-8')
+        print('client send plaintext: ', client_to_send)
         ciphertext = self.cipher.encrypt(data_to_send.encode('utf-8'))
+        print('client send ciphertext: ', ciphertext)
         self.comm_socket.send(ciphertext)
         # TODO: implement received data: 
 
@@ -108,8 +113,8 @@ class Client():
 
     
         recv_data = self.comm_socket.recv(BUFFER_SIZE)
-        self.cipher.decrypt(recv_data)
-        return recv_data.decode('utf-8')
+        res = self.cipher.decrypt(recv_data)
+        return res.decode('utf-8')
 
 
         
