@@ -18,7 +18,7 @@ class Server:
         self.session_key = None
         self.TCP_PORT = None
 
-    def do_server(self, TCP_PORT=5005, secret_key=None):
+    def listen_connections(self, TCP_PORT=5005, secret_key=None):
         if secret_key is None:
             print("Did not get secret key input, screw you too")
             return ERR_NO_SECRET_KEY, "No Secret Key"

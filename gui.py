@@ -107,12 +107,13 @@ class ClientPage(tk.Frame):
 
         # Call the do_client function
         self.client = Client()
-        print("return value from client:", self.client.establish_connection(
-            self.ip_adr, self.port, self.secret_value))
+        self.status, message = self.client.establish_connection(
+            self.ip_adr, 
+            self.port, 
+            self.secret_value
+        )
         # self.status, message = self.client.establish_connection(self.ip_adr, self.port, self.secret_value)
 
-        self.status = 0
-        message = "FML"
         label4 = tk.Label(self, text="")
         label4.grid(row=4, column=0)
         if(self.status == OK_AUTHENTICATED):
@@ -159,6 +160,7 @@ class ClientPage(tk.Frame):
                 # in this case go back to the main server menu
                 pass
 
+
 class ServerPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -188,8 +190,7 @@ class ServerPage(tk.Frame):
         self.proceed_button = tk.Button(
             self, text="Continue", command=self.connect)
         self.proceed_button.grid(row=5, column=1)
-        close_button = tk.Button(self, text="Close",
-                                 command=controller.quit)
+        close_button = tk.Button(self, text="Close", command=controller.quit)
         close_button.grid(row=5, column=2)
 
     def connect(self):
@@ -197,8 +198,10 @@ class ServerPage(tk.Frame):
         self.secret_value = self.entries[1].get()
 
         self.server = Server()
-        self.status, message = self.server.do_server(
-            self.port, self.secret_value)
+        self.status, message = self.server.listen_connections(
+            self.port, 
+            self.secret_value
+        )
 
         label3 = tk.Label(self, text="")
         label3.grid(row=3, column=0)
@@ -239,6 +242,7 @@ class ServerPage(tk.Frame):
                 # in this case go back to the main server menu
                 pass
             # print(received_val)
+
 
 if __name__ == "__main__":
     app = VPN()
