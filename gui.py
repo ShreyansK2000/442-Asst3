@@ -87,16 +87,19 @@ class ClientPage(tk.Frame):
                                  command=controller.quit)
         close_button.grid(row=5, column=2)
 
+    # This function reads input from users,
+    # call the authentication function from client
+    # Update if client - server is connected
     def connect(self):
         self.IP_adr = self.entries[0].get()
         self.port = self.entries[1].get()
         self.secret_value = self.entries[2].get()
         print(self.secret_value)
-        connected = 1
+        self.connected = 1
         # Call the do_client function
         # connected = client.do_client()
 
-        if(connected):
+        if(self.connected):
             print("HERE")
             label4 = tk.Label(self, text="Data to be sent")
             entry4 = tk.Entry(self)
@@ -104,9 +107,12 @@ class ClientPage(tk.Frame):
             label4.grid(row=4, column=0)
             entry4.grid(row=4, column=1)
             self.label.config(text="Client Mode - Connected")
-            self.proceed_button.config(text="Send")
+            self.proceed_button.config(text="Send", command=self.send)
 
-        return connected
+    # This function is used to send input data
+    # once the authentication finishes
+    def send(self):
+        print("TODO")
 
 
 class ServerPage(tk.Frame):
