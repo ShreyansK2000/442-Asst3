@@ -70,9 +70,13 @@ class Client():
             plaintext = cipher.decrypt(data)
             (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
             # time skew? offer 3 seconds???
+            # this clock skew check is not correct
             if ret_timestamp <= timestamp + 3:
                 print("authenticated server")
-                self.cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
+                # use returned nonce + 1 for the client side decrypt cipher
+                self.decrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
+                # use original nonce for the client side encrypt cipher
+                self.encrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
                 return OK_AUTHENTICATED, "Server Auth OK"
             # TODO: what happens if not authenticated?
 
@@ -100,7 +104,7 @@ class Client():
 
         client_to_send = data_to_send.encode('utf-8')
         print('client send plaintext: ', client_to_send)
-        ciphertext = self.cipher.encrypt(data_to_send.encode('utf-8'))
+        ciphertext = self.encrypt_cipher.encrypt(data_to_send.encode('utf-8'))
         print('client send ciphertext: ', ciphertext)
         self.comm_socket.send(ciphertext)
         # TODO: implement received data: 
@@ -113,7 +117,7 @@ class Client():
 
     
         recv_data = self.comm_socket.recv(BUFFER_SIZE)
-        res = self.cipher.decrypt(recv_data)
+        res = self.decrypt_cipher.decrypt(recv_data)
         return res.decode('utf-8')
 
 

@@ -64,7 +64,10 @@ class Server:
                     cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
                     ciphertext = cipher.encrypt(auth_return)
                     conn.send(ciphertext)
-                    self.cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
+                    # use nonce + 1 for the server side encrypt cipher
+                    self.encrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce + 1))
+                    # use the initial nonce for the server side decrypt cipher
+                    self.decrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce))
                     self.client_connection = conn
                     self.client_addr = addr
                     # break   # break means authenticated on both side
@@ -88,7 +91,7 @@ class Server:
             print("Data too large. Please keep less than 4096 bytes")
             return INVALID_DATA
 
-        ciphertext = self.cipher.encrypt(data_to_send.encode('utf-8'))
+        ciphertext = self.encrypt_cipher.encrypt(data_to_send.encode('utf-8'))
         self.client_connection.send(ciphertext)
     
     def receive_data(self):
@@ -100,7 +103,7 @@ class Server:
     
         recv_data = self.client_connection.recv(BUFFER_SIZE)
         print('server received ciphertext: ', recv_data)
-        res = self.cipher.decrypt(recv_data)
+        res = self.decrypt_cipher.decrypt(recv_data)
         print('server received plaintext: ', res)
         return res
     
