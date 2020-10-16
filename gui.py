@@ -108,8 +108,8 @@ class ClientPage(tk.Frame):
         # Call the do_client function
         self.client = Client()
         self.status, message = self.client.establish_connection(
-            self.ip_adr, 
-            self.port, 
+            self.ip_adr,
+            self.port,
             self.secret_value
         )
         # self.status, message = self.client.establish_connection(self.ip_adr, self.port, self.secret_value)
@@ -117,7 +117,8 @@ class ClientPage(tk.Frame):
         label4 = tk.Label(self, text="")
         label4.grid(row=4, column=0)
         if(self.status == OK_AUTHENTICATED):
-            print("HERE")
+            for entrytuple in self.entries.items():
+                entrytuple[1].config(state="disabled")
             #label4 = tk.Label(self, text="Data to be sent")
             label4.config(text="Data to be sent")
             entry4 = tk.Entry(self)
@@ -199,7 +200,7 @@ class ServerPage(tk.Frame):
 
         self.server = Server()
         self.status, message = self.server.listen_connections(
-            self.port, 
+            self.port,
             self.secret_value
         )
 
@@ -207,6 +208,8 @@ class ServerPage(tk.Frame):
         label3.grid(row=3, column=0)
         if(self.status == OK_AUTHENTICATED):
             print("HERE server")
+            for entrytuple in self.entries.items():
+                entrytuple[1].config(state="disabled")
             #label4 = tk.Label(self, text="Data to be sent")
             label3.config(text="Data to be sent")
             entry3 = tk.Entry(self)
