@@ -105,6 +105,13 @@ class ClientPage(tk.Frame):
         print(self.secret_value)
         self.connected = 1
 
+        length = len(self.secret_value)
+        if(length < 32):
+            for i in range(length, 32):
+                self.secret_value += '0'
+        elif length > 32:
+            self.secret_value = self.secret_value[0:32]
+
         # Call the do_client function
         self.client = Client()
         self.status, message = self.client.establish_connection(
@@ -197,6 +204,13 @@ class ServerPage(tk.Frame):
     def connect(self):
         self.port = self.entries[0].get()
         self.secret_value = self.entries[1].get()
+
+        length = len(self.secret_value)
+        if(length < 32):
+            for i in range(length, 32):
+                self.secret_value += '0'
+        elif length > 32:
+            self.secret_value = self.secret_value[0:32]
 
         self.server = Server()
         self.status, message = self.server.listen_connections(
