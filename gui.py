@@ -124,6 +124,7 @@ class ClientPage(tk.Frame):
             #label4.grid(row=4, column=0)
             entry4.grid(row=4, column=1)
             recvThread = threading.Thread(target=self.recv)
+            recvThread.setDaemon(True)
             recvThread.start()
             self.label.config(text="Client Mode - Connected")
             self.proceed_button.config(text="Send", command=self.send)
@@ -145,11 +146,18 @@ class ClientPage(tk.Frame):
         label6 = tk.Label(self, text="No data")
         label6.grid(row=5, column=1)
         while True:
-            received_val = self.client.receive_data()
-            # print(received_val)
-            # TODO update GUI label with received_val
-            label6.config(text=str(received_val))
+            # received_val = self.client.receive_data()
+            # # print(received_val)
+            # # TODO update GUI label with received_val
+            # label6.config(text=str(received_val))
 
+            status, received_val = self.client.receive_data()
+            if status is OK_RECEIVED_MESSAGE:
+                label6.config(text=str(received_val))
+            else:
+                # TODO do a popup connection closed
+                # in this case go back to the main server menu
+                pass
 
 class ServerPage(tk.Frame):
 
@@ -203,6 +211,7 @@ class ServerPage(tk.Frame):
             #label4.grid(row=4, column=0)
             entry3.grid(row=3, column=1)
             recvThread = threading.Thread(target=self.recv)
+            recvThread.setDaemon(True)
             recvThread.start()
             self.label.config(text="Server Mode - Connected")
             self.proceed_button.config(text="Send", command=self.send)
@@ -222,11 +231,14 @@ class ServerPage(tk.Frame):
         label5 = tk.Label(self, text="No data")
         label5.grid(row=4, column=1)
         while True:
-            received_val = self.server.receive_data()
+            status, received_val = self.server.receive_data()
+            if status is OK_RECEIVED_MESSAGE:
+                label5.config(text=str(received_val))
+            else:
+                # TODO do a popup connection closed
+                # in this case go back to the main server menu
+                pass
             # print(received_val)
-            # TODO update GUI label with received_val
-            label5.config(text=str(received_val))
-
 
 if __name__ == "__main__":
     app = VPN()

@@ -102,12 +102,12 @@ class Server:
 
         if self.client_connection is None:
             print("Authenticated Communication non established")
-            return INVALID_RECV_REQ
+            return INVALID_RECV_REQ, "Authenticated Communication non established"
 
-        recv_data = self.client_connection.recv(BUFFER_SIZE)
-        print('server received ciphertext: ', recv_data)
-        res = self.decrypt_cipher.decrypt(recv_data)
-        print('server received plaintext: ', res)
-        return res.decode('utf-8')
+        try:
+            recv_data = self.client_connection.recv(BUFFER_SIZE)
+            return OK_RECEIVED_MESSAGE, self.decrypt_cipher.decrypt(recv_data).decode('utf-8')
+        except socket.error as error:
+            return ERR_SOCKET_EXCEPTION, error
 
     # conn.close()

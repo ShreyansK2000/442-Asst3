@@ -113,12 +113,13 @@ class Client():
 
         if self.comm_socket is None: 
             print("Authenticated Communication non established")
-            return INVALID_RECV_REQ
+            return INVALID_RECV_REQ, "Authenticated Communication non established"
 
-    
-        recv_data = self.comm_socket.recv(BUFFER_SIZE)
-        res = self.decrypt_cipher.decrypt(recv_data)
-        return res.decode('utf-8')
+        try:
+            recv_data = self.comm_socket.recv(BUFFER_SIZE)
+            return OK_RECEIVED_MESSAGE, self.decrypt_cipher.decrypt(recv_data).decode('utf-8')
+        except socket.error as error:
+            return ERR_SOCKET_EXCEPTION, error
 
 
         
