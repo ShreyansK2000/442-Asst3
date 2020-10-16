@@ -5,7 +5,7 @@ from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
 import base64
-import time
+from time import time
 import struct
 
 def do_server():
@@ -17,11 +17,8 @@ def do_server():
     # get shared secret
     file_in = open("keys/shared-secret.bin", "rb")
     secret_key = file_in.read(32)
-    iv = file_in.read(16)
-    iv2 = file_in.read(16)
     file_in.close()
     print(secret_key)
-    cipher = AES.new(secret_key, AES.MODE_OFB, iv)
 
     # connect socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -35,17 +32,20 @@ def do_server():
         if data.decode("utf-8") == INIT_MESSAGE:
             print("received connection request")
             data = conn.recv(BUFFER_SIZE)
+            timestamp = int(time()) 
+            cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
             plaintext = cipher.decrypt(data)
             print("authenticated client") 
             # get nonce value
-            (timestamp, ) = struct.unpack(">i", plaintext[0:4])
-
+            (nonce, ) = struct.unpack(">i", plaintext[0:4])
+            print(nonce)
             # get session key
             session_key = plaintext[5:]
 
-            # return nonce + 1
-            cipher = AES.new(secret_key, AES.MODE_OFB, iv2)
-            auth_return = struct.pack(">ix", int(timestamp) + 1)
+            # return nonce + 1            
+            auth_return = struct.pack(">ix", int(nonce) + 1)
+            timestamp = int(time()) 
+            cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
             ciphertext = cipher.encrypt(auth_return)
             conn.send(ciphertext)
 

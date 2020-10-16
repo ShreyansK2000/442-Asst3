@@ -20,11 +20,8 @@ def do_client():
     # get shared secret
     file_in = open("keys/shared-secret.bin", "rb")
     secret_key = file_in.read(32)
-    iv = file_in.read(16)
-    iv2 = file_in.read(16)
     file_in.close()
     print(secret_key)
-    cipher = AES.new(secret_key, AES.MODE_OFB, iv)
 
     # connect socket
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -40,6 +37,7 @@ def do_client():
     auth_msg = struct.pack(">ix", timestamp) + session_key
     print(session_key)
     # print("num bytes: " + str(struct.pack(">i", timestamp).size))
+    cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
     ciphertext = cipher.encrypt(auth_msg)
 
     # send id message
@@ -49,12 +47,15 @@ def do_client():
 
     # get nonce back
     data = s.recv(BUFFER_SIZE)
-    cipher = AES.new(secret_key, AES.MODE_OFB, iv2)
+    timestamp = int(time())
+    cipher = AES.new(secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
     plaintext = cipher.decrypt(data)
     (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
     # time skew? offer 3 seconds???
-    if ret_timestamp < timestamp + 3:
+    if ret_timestamp == timestamp + 3:
         print("authenticated server")
     # TODO: what happens if not authenticated?
+
+    print(ret_timestamp)
 
     s.close()
