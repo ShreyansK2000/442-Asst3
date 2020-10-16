@@ -2,6 +2,7 @@ import socket
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
+from Crypto.Hash import SHA256
 import base64
 from time import time
 import struct
@@ -25,7 +26,11 @@ class Client():
 
         self.TCP_IP = TCP_IP
         self.TCP_PORT = int(TCP_PORT)
-        self.secret_key = secret_key.encode('utf-8')
+        hash_object = SHA256.new()
+        hash_object.update(secret_key.encode('utf-8'))
+        self.secret_key = hash_object.digest()
+        print('client hashed secret key', self.secret_key)
+
         
         INIT_MESSAGE = "I_AM_CLIENT"
 
@@ -50,9 +55,14 @@ class Client():
             self.session_key = get_random_bytes(32)
             print('client session key', self.session_key)
 
+            h = SHA256.new()
+            h.update(self.secret_key + self.session_key)
+            hash_out = h.digest()
+            print('client hash', hash_out)
+
             # encrypt bytestream
             print("timestamp: " + str(timestamp))
-            auth_msg = struct.pack(">ix", timestamp) + self.session_key
+            auth_msg = struct.pack(">ix", timestamp) + self.session_key + hash_out
             print(self.session_key)
             # print("num bytes: " + str(struct.pack(">i", timestamp).size))
             cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))

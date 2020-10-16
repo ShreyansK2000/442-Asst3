@@ -3,6 +3,7 @@
 import socket
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
+from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 import base64
 from time import time
@@ -25,7 +26,10 @@ class Server:
 
         INIT_MESSAGE = "I_AM_CLIENT"
 
-        self.secret_key = secret_key.encode('utf-8')
+        hash_object = SHA256.new()
+        hash_object.update(secret_key.encode('utf-8'))
+        self.secret_key = hash_object.digest()
+        print('server hashed secret key', self.secret_key)
         # # get shared secret
         # file_in = open("keys/shared-secret.bin", "rb")
         # secret_key = file_in.read(32)
@@ -50,34 +54,51 @@ class Server:
                     cipher = AES.new(self.secret_key, AES.MODE_EAX,
                                      struct.pack(">ix", timestamp))
                     plaintext = cipher.decrypt(data)
-                    print("authenticated client")
+                    # print("authenticated client")
                     # get nonce value
                     (nonce, ) = struct.unpack(">i", plaintext[0:4])
                     # print('nonce', plaintext[0:4])
 
                     # get session key
-                    self.session_key = plaintext[5:]
-                    print('server session key', self.session_key)
-                    print('session key size', sys.getsizeof(self.session_key))
+                    # print("client rcvd secret key", client_secret_key)
+                    session_key_from_client = plaintext[5:37]
+                    hash_from_client = plaintext[37:]
+                    print("client session key", session_key_from_client)
+                    print('server reading client hash', hash_from_client)
 
-                    # return nonce + 1
-                    auth_return = struct.pack(">ix", int(nonce) + 1)
-                    timestamp = int(time())
-                    cipher = AES.new(self.secret_key, AES.MODE_EAX,
-                                     struct.pack(">ix", timestamp))
-                    ciphertext = cipher.encrypt(auth_return)
-                    conn.send(ciphertext)
-                    # use nonce + 1 for the server side encrypt cipher
-                    self.encrypt_cipher = AES.new(
-                        self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce + 1))
-                    # use the initial nonce for the server side decrypt cipher
-                    self.decrypt_cipher = AES.new(
-                        self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce))
-                    self.client_connection = conn
-                    self.client_addr = addr
-                    # break   # break means authenticated on both side
-                    return OK_AUTHENTICATED, "Client Auth OK"
 
+                    compute_hash = SHA256.new()
+                    compute_hash.update(self.secret_key + session_key_from_client)
+
+                    if hash_from_client == compute_hash.digest():
+                        print("authenticated client")
+                        self.session_key = session_key_from_client
+                        print('server session key', self.session_key)
+                        print('session key size', sys.getsizeof(self.session_key))
+
+                        # return nonce + 1
+                        auth_return = struct.pack(">ix", int(time()) + 1)
+                        timestamp = int(time())
+                        cipher = AES.new(self.secret_key, AES.MODE_EAX,
+                                        struct.pack(">ix", timestamp))
+                        ciphertext = cipher.encrypt(auth_return)
+                        conn.send(ciphertext)
+                        # use nonce + 1 for the server side encrypt cipher
+                        self.encrypt_cipher = AES.new(
+                            self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce + 1))
+                        # use the initial nonce for the server side decrypt cipher
+                        self.decrypt_cipher = AES.new(
+                            self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce))
+                        self.client_connection = conn
+                        self.client_addr = addr
+                        # break   # break means authenticated on both side
+                        return OK_AUTHENTICATED, "Client Auth OK"
+                    else: 
+                        print("invalid client")
+                        return ERR_UNAUTHENTICATED_REQ, "Invalid client"
+
+
+                    
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
