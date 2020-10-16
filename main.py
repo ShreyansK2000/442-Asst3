@@ -2,6 +2,7 @@ import server
 import client
 import sys
 from tkinter import *
+import gui
 
 root = Tk()
 root.title("Team TBD's VPN")
@@ -10,7 +11,12 @@ isServerApp = BooleanVar()
 def launch():
     global isServerApp, root
     root.destroy()
-    server.do_server() if isServerApp.get() else client.do_client()
+
+    if isServerApp.get():
+        server.do_server()
+    else: 
+        
+    server.do_server() if isServerApp.get() else client.establish_connection()
 
 if __name__ == "__main__":
       
