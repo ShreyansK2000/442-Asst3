@@ -10,6 +10,7 @@ import struct
 import sys
 from comm_constants import *
 
+
 class Server:
 
     def __init__(self):
@@ -45,10 +46,11 @@ class Server:
                 if data.decode("utf-8") == INIT_MESSAGE:
                     print("Received connection request")
                     data = conn.recv(BUFFER_SIZE)
-                    timestamp = int(time()) 
-                    cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+                    timestamp = int(time())
+                    cipher = AES.new(self.secret_key, AES.MODE_EAX,
+                                     struct.pack(">ix", timestamp))
                     plaintext = cipher.decrypt(data)
-                    print("authenticated client") 
+                    print("authenticated client")
                     # get nonce value
                     (nonce, ) = struct.unpack(">i", plaintext[0:4])
                     # print('nonce', plaintext[0:4])
@@ -58,25 +60,27 @@ class Server:
                     print('server session key', self.session_key)
                     print('session key size', sys.getsizeof(self.session_key))
 
-                    # return nonce + 1            
+                    # return nonce + 1
                     auth_return = struct.pack(">ix", int(nonce) + 1)
-                    timestamp = int(time()) 
-                    cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+                    timestamp = int(time())
+                    cipher = AES.new(self.secret_key, AES.MODE_EAX,
+                                     struct.pack(">ix", timestamp))
                     ciphertext = cipher.encrypt(auth_return)
                     conn.send(ciphertext)
                     # use nonce + 1 for the server side encrypt cipher
-                    self.encrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce + 1))
+                    self.encrypt_cipher = AES.new(
+                        self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce + 1))
                     # use the initial nonce for the server side decrypt cipher
-                    self.decrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce))
+                    self.decrypt_cipher = AES.new(
+                        self.session_key, AES.MODE_EAX,  struct.pack(">ix", nonce))
                     self.client_connection = conn
                     self.client_addr = addr
                     # break   # break means authenticated on both side
                     return OK_AUTHENTICATED, "Client Auth OK"
-            
+
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
-
 
     def send_data(self, data_to_send=None):
         if self.comm_socket is None or self.session_key is None:
@@ -93,18 +97,17 @@ class Server:
 
         ciphertext = self.encrypt_cipher.encrypt(data_to_send.encode('utf-8'))
         self.client_connection.send(ciphertext)
-    
+
     def receive_data(self):
 
-        if self.client_connection is None: 
+        if self.client_connection is None:
             print("Authenticated Communication non established")
             return INVALID_RECV_REQ
 
-    
         recv_data = self.client_connection.recv(BUFFER_SIZE)
         print('server received ciphertext: ', recv_data)
         res = self.decrypt_cipher.decrypt(recv_data)
         print('server received plaintext: ', res)
-        return res
-    
+        return res.decode('utf-8')
+
     # conn.close()
