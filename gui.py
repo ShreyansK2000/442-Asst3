@@ -43,14 +43,11 @@ class ClientPage(tk.Frame):
 
     def __init__(self, parent, controller):
 
-        # Stored variables for client
-
-        # ____________________________
-
         tk.Frame.__init__(self, parent)
         self.label = tk.Label(self, text="Client Mode", font=LARGE_FONT)
         self.label.grid(row=0, column=0)
 
+        # ____________________Input____________________________________
         label1 = tk.Label(self, text="IP Address")
         label2 = tk.Label(self, text="Port #")
         label3 = tk.Label(self, text="Shared Secret Value")
@@ -78,6 +75,7 @@ class ClientPage(tk.Frame):
 
         #label.grid(pady=10, padx=10)
 
+        # ________________Controll buttons______________________________
         switch_button = tk.Button(self, text="Server",
                                   command=lambda: controller.show_frame("Server"))
         switch_button.grid(row=5, column=0)
@@ -116,19 +114,31 @@ class ServerPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
 
-        # Stored variables for server
+        self.label = tk.Label(self, text="Server Mode", font=LARGE_FONT)
+        self.label.grid(pady=10, padx=10)
 
-        # ____________________________
+        # ____________________Input____________________________________
+        label1 = tk.Label(self, text="Shared Secret Value")
+        self.entries = {}
+        entry1 = tk.Entry(self)
+        self.entries[0] = entry1
 
-        label = tk.Label(self, text="Server Mode", font=LARGE_FONT)
-        label.grid(pady=10, padx=10)
+        label1.grid(row=1, column=0)
+        entry1.grid(row=1, column=1)
 
+        # ________________Controll buttons______________________________
         switch_button = tk.Button(self, text="Client",
                                   command=lambda: controller.show_frame("Client"))
-        switch_button.grid(row=1, column=0)
+        switch_button.grid(row=3, column=0)
+        self.proceed_button = tk.Button(
+            self, text="Continue", command=self.connect)
+        self.proceed_button.grid(row=3, column=1)
         close_button = tk.Button(self, text="Close",
                                  command=controller.quit)
-        close_button.grid(row=1, column=1)
+        close_button.grid(row=3, column=2)
+
+    def connect(self):
+        print("TODO")
 
 
 app = VPN()
