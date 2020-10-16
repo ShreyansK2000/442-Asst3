@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 from client import Client
 from server import Server
 from comm_constants import *
@@ -6,6 +7,7 @@ import time
 import threading
 
 LARGE_FONT = ("Verdana", 12)
+
 
 class VPN(tk.Tk):
     def __init__(self):
@@ -15,7 +17,7 @@ class VPN(tk.Tk):
         self.geometry("400x200")
 
         # The container - parent frame
-        container = tk.Frame(self)
+        container = ttk.Notebook(self)
         container.grid()  # pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
@@ -31,6 +33,9 @@ class VPN(tk.Tk):
         c_frame.grid(row=0, column=0, sticky="nsew")
         s_frame.grid(row=0, column=0, sticky="nsew")
 
+        container.add(c_frame, text="CLIENT")
+        container.add(s_frame, text="SERVER")
+
         self.show_frame("Client")
 
     def show_frame(self, cont):
@@ -40,6 +45,8 @@ class VPN(tk.Tk):
 # Client mode, the program can initiate a TCP connection
 # to a given IP address, on a given port ;
 # input: IP address, on a given port, Shared Secret Value, Data to be Sent
+
+
 class ClientPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -77,9 +84,9 @@ class ClientPage(tk.Frame):
         #label.grid(pady=10, padx=10)
 
         # ________________Controll buttons______________________________
-        switch_button = tk.Button(self, text="Server",
-                                  command=lambda: controller.show_frame("Server"))
-        switch_button.grid(row=6, column=0)
+        # switch_button = tk.Button(self, text="Server",
+        #                           command=lambda: controller.show_frame("Server"))
+        # switch_button.grid(row=6, column=0)
 
         self.proceed_button = tk.Button(
             self, text="Continue", command=self.connect)
@@ -100,9 +107,10 @@ class ClientPage(tk.Frame):
 
         # Call the do_client function
         self.client = Client()
-        print("return value from client:",self.client.establish_connection(self.ip_adr, self.port, self.secret_value))
+        print("return value from client:", self.client.establish_connection(
+            self.ip_adr, self.port, self.secret_value))
         # self.status, message = self.client.establish_connection(self.ip_adr, self.port, self.secret_value)
-        
+
         self.status = 0
         message = "FML"
         label4 = tk.Label(self, text="")
@@ -129,7 +137,7 @@ class ClientPage(tk.Frame):
     def send(self):
         self.data_to_send = self.entries[3].get()
         self.client.send_data(self.data_to_send)
-        # TODO update GUI telling that data sent 
+        # TODO update GUI telling that data sent
 
     def recv(self):
         label5 = tk.Label(self, text="Data received")
@@ -141,7 +149,6 @@ class ClientPage(tk.Frame):
             # print(received_val)
             # TODO update GUI label with received_val
             label6.config(text=str(received_val))
-            
 
 
 class ServerPage(tk.Frame):
@@ -166,11 +173,10 @@ class ServerPage(tk.Frame):
         entry1.grid(row=1, column=1)
         entry2.grid(row=2, column=1)
 
-
         # ________________Controll buttons______________________________
-        switch_button = tk.Button(self, text="Client",
-                                  command=lambda: controller.show_frame("Client"))
-        switch_button.grid(row=5, column=0)
+        # switch_button = tk.Button(self, text="Client",
+        #                           command=lambda: controller.show_frame("Client"))
+        # switch_button.grid(row=5, column=0)
         self.proceed_button = tk.Button(
             self, text="Continue", command=self.connect)
         self.proceed_button.grid(row=5, column=1)
@@ -183,7 +189,8 @@ class ServerPage(tk.Frame):
         self.secret_value = self.entries[1].get()
 
         self.server = Server()
-        self.status, message = self.server.do_server(self.port, self.secret_value)
+        self.status, message = self.server.do_server(
+            self.port, self.secret_value)
 
         label3 = tk.Label(self, text="")
         label3.grid(row=3, column=0)
@@ -203,11 +210,11 @@ class ServerPage(tk.Frame):
             # TODO use another label to write the error message
             self.label.config(text="Server Mode - No Connection")
             label3.config(text=message)
-    
+
     def send(self):
         self.data_to_send = self.entries[2].get()
         self.server.send_data(self.data_to_send)
-        # TODO update GUI telling that data sent 
+        # TODO update GUI telling that data sent
 
     def recv(self):
         label4 = tk.Label(self, text="Data received")
@@ -224,4 +231,3 @@ class ServerPage(tk.Frame):
 if __name__ == "__main__":
     app = VPN()
     app.mainloop()
-
