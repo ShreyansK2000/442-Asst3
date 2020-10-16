@@ -34,8 +34,9 @@ class VPN(tk.Tk):
         frame.tkraise()
 
 
-# def qf(param):
-#     print(param)
+# Client mode, the program can initiate a TCP connection
+# to a given IP address, on a given port ;
+# input: IP address, on a given port, Shared Secret Value, Data to be Sent
 class ClientPage(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -50,44 +51,50 @@ class ClientPage(tk.Frame):
 
         label1 = tk.Label(self, text="IP Address")
         label2 = tk.Label(self, text="Port #")
-        label3 = tk.Label(self, text="Message")
+        label3 = tk.Label(self, text="Shared Secret Value")
+        label4 = tk.Label(self, text="Data to be sent")
         self.entries = {}
         entry1 = tk.Entry(self)
         entry2 = tk.Entry(self)
         entry3 = tk.Entry(self)
+        entry4 = tk.Entry(self)
 
         self.entries[0] = entry1
         self.entries[1] = entry2
         self.entries[2] = entry3
+        self.entries[3] = entry4
 
         label1.grid(row=1, column=0)
         label2.grid(row=2, column=0)
         label3.grid(row=3, column=0)
+        label4.grid(row=4, column=0)
 
         entry1.grid(row=1, column=1)
         entry2.grid(row=2, column=1)
         entry3.grid(row=3, column=1)
+        entry4.grid(row=4, column=1)
 
         #label.grid(pady=10, padx=10)
 
         switch_button = tk.Button(self, text="Server",
                                   command=lambda: controller.show_frame("Server"))
-        switch_button.grid(row=4, column=0)
-        # Add client.do_client()
+        switch_button.grid(row=5, column=0)
+
         send_button = tk.Button(self, text="Send", command=self.send)
-        send_button.grid(row=4, column=1)
+        send_button.grid(row=5, column=1)
         close_button = tk.Button(self, text="Close",
                                  command=controller.quit)
-        close_button.grid(row=4, column=2)
+        close_button.grid(row=5, column=2)
 
-    # TODO: A weird error
-
-    def Send(self):
+    def send(self):
         print("HERE")
+        # print(self.entries[0].get())
         self.IP_adr = self.entries[0].get()
         self.port = self.entries[1].get()
-        self.data = self.entries[2].get()
+
         print(self.IP_adr)
+
+        # Call the do_client function
 
 
 class ServerPage(tk.Frame):

@@ -6,8 +6,11 @@ import base64
 from time import time
 import struct
 
+# Tung - I suggest this function takes parameter from the GUI
+# def do_client(TCP_IP, TCP_PORT, data)
 
-def do_client():    
+
+def do_client():
     print("doing client")
     TCP_IP = '127.0.0.1'
     TCP_PORT = 5005
@@ -29,8 +32,8 @@ def do_client():
 
     # create initial message
     # nonce timestamp
-    timestamp = int(time())    
-    #generate session key
+    timestamp = int(time())
+    # generate session key
     session_key = get_random_bytes(32)
     # encrypt bytestream
     print("timestamp: " + str(timestamp))
@@ -38,7 +41,7 @@ def do_client():
     print(session_key)
     # print("num bytes: " + str(struct.pack(">i", timestamp).size))
     ciphertext = cipher.encrypt(auth_msg)
-    
+
     # send id message
     s.send(INIT_MESSAGE.encode('utf-8'))
     # send encrypted nonce and key
@@ -51,9 +54,7 @@ def do_client():
     (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
     # time skew? offer 3 seconds???
     if ret_timestamp < timestamp + 3:
-        print("authenticated server") 
+        print("authenticated server")
     # TODO: what happens if not authenticated?
-
-
 
     s.close()
