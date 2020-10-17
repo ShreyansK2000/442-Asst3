@@ -368,12 +368,15 @@ class ServerPage(tk.Frame):
         label5.grid(row=4, column=1)
         while True:
             status, received_val, cipher = self.server.receive_data()
+            print("server receive")
             if status is OK_RECEIVED_MESSAGE:
+                print("server received data")
                 label5.config(text=str(received_val))
                 self.labeldata2.config(text = cipher)
             else:
                 # TODO do a popup connection closed
                 # in this case go back to the main server menu
+                print("Not received: ", status,received_val)
                 pass
             # print(received_val)
 

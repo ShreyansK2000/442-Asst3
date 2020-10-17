@@ -9,8 +9,9 @@ import struct
 from comm_constants import *
 import sys
 
+
 class Client():
-    
+
     def __init__(self):
         self.comm_socket = None
         self.session_key = None
@@ -28,11 +29,10 @@ class Client():
             return self.initComms()
 
         elif step == 2:
-            return  self.encryptClientAuth()
+            return self.encryptClientAuth()
 
         elif step == 3:
             return self.waitAuthResponse()
-
 
     def establish_connection(self, TCP_IP='127.0.0.1', TCP_PORT=5005, secret_key=None):
         print("doing client")
@@ -54,8 +54,9 @@ class Client():
     def initComms(self):
         # send id message
 
-        try: 
-            self.comm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.comm_socket = socket.socket(
+                socket.AF_INET, socket.SOCK_STREAM)
             self.comm_socket.connect((self.TCP_IP, self.TCP_PORT))
             self.comm_socket.send(self.INIT_MESSAGE.encode('utf-8'))
 
@@ -64,10 +65,10 @@ class Client():
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
-    
+
     def encryptClientAuth(self):
 
-        try: 
+        try:
             timestamp = int(time())
             # generate session key
             self.session_key = get_random_bytes(32)
@@ -80,10 +81,12 @@ class Client():
 
             # encrypt bytestream
             print("timestamp: " + str(timestamp))
-            auth_msg = struct.pack(">ix", timestamp) + self.session_key + hash_out
+            auth_msg = struct.pack(">ix", timestamp) + \
+                self.session_key + hash_out
             print(self.session_key)
             # print("num bytes: " + str(struct.pack(">i", timestamp).size))
-            cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+            cipher = AES.new(self.secret_key, AES.MODE_EAX,
+                             struct.pack(">ix", timestamp))
             ciphertext = cipher.encrypt(auth_msg)
 
             self.comm_socket.send(ciphertext)
@@ -95,10 +98,11 @@ class Client():
 
     def waitAuthResponse(self):
         # get nonce back
-        try: 
+        try:
             data = self.comm_socket.recv(BUFFER_SIZE)
             timestamp = int(time())
-            cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
+            cipher = AES.new(self.secret_key, AES.MODE_EAX,
+                             struct.pack(">ix", timestamp))
             plaintext = cipher.decrypt(data)
             (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
             # time skew? offer 3 seconds???
@@ -106,9 +110,11 @@ class Client():
             if timestamp <= ret_timestamp <= timestamp + 3:
                 print("authenticated server")
                 # use returned nonce + 1 for the client side decrypt cipher
-                self.decrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
+                self.decrypt_cipher = AES.new(
+                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
                 # use original nonce for the client side encrypt cipher
-                self.encrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
+                self.encrypt_cipher = AES.new(
+                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
                 return OK_AUTHENTICATED, "Server Auth OK"
             # TODO: FIX AUTHENTICATION OF SERVER HERE!!!
 
@@ -116,7 +122,6 @@ class Client():
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
-
 
     def send_data(self, data_to_send=None):
         if self.comm_socket is None or self.session_key is None or self.TCP_IP is None:
@@ -134,8 +139,9 @@ class Client():
         client_to_send = data_to_send.encode('utf-8')
         print('client send plaintext: ', client_to_send)
         self.mac.update(client_to_send)
-        ciphertext = self.encrypt_cipher.encrypt(self.mac.digest() + data_to_send.encode('utf-8'))
-        # TODO: implement received data: 
+        ciphertext = self.encrypt_cipher.encrypt(
+            self.mac.digest() + data_to_send.encode('utf-8'))
+        # TODO: implement received data:
 
         try:
             self.comm_socket.send(ciphertext)
@@ -145,10 +151,10 @@ class Client():
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
-            
+
     def receive_data(self):
 
-        if self.comm_socket is None: 
+        if self.comm_socket is None:
             print("Authenticated Communication non established")
             return INVALID_RECV_REQ, "Authenticated Communication non established", "None"
 
@@ -164,7 +170,3 @@ class Client():
             return ERR_HMAC_EXCEPTION, "HMAC signature does not match", "None"
         except socket.error as error:
             return ERR_SOCKET_EXCEPTION, error, "None"
-
-
-        
-
