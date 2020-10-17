@@ -17,6 +17,23 @@ class Client():
         self.TCP_IP = None
         self.TCP_PORT = None
 
+    def execute(self, debug=False, step=None):
+        if not debug:
+            ret1 = self.initComms()
+            ret2 = self.encryptClientAuth()
+            ret3 = self.waitAuthResponse()
+            return ret3
+
+        elif step == 1:
+            return self.initComms()
+
+        elif step == 2:
+            return  self.encryptClientAuth()
+
+        elif step == 3:
+            return self.waitAuthResponse()
+
+
     def establish_connection(self, TCP_IP='127.0.0.1', TCP_PORT=5005, secret_key=None):
         print("doing client")
 
@@ -26,30 +43,29 @@ class Client():
 
         self.TCP_IP = TCP_IP
         self.TCP_PORT = int(TCP_PORT)
+        self.INIT_MESSAGE = "I_AM_CLIENT"
+        
         hash_object = SHA256.new()
         hash_object.update(secret_key.encode('utf-8'))
         self.secret_key = hash_object.digest()
-        print('client hashed secret key', self.secret_key)
 
-        
-        INIT_MESSAGE = "I_AM_CLIENT"
+    def initComms(self):
+        # send id message
 
-        # get shared secret
-        # TODO this is inputted by the TA in GUI
-        # file_in = open("keys/shared-secret.bin", "rb")
-        # secret_key = file_in.read(32)
-        # file_in.close()
-
-        
-        print('client app printing secret key', self.secret_key)
-
-        # connect socket
-        self.comm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
+        try: 
+            self.comm_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.comm_socket.connect((self.TCP_IP, self.TCP_PORT))
+            self.comm_socket.send(self.INIT_MESSAGE.encode('utf-8'))
 
-            # create initial message
-            # nonce timestamp
+            return STEP_RETURN_1, self.INIT_MESSAGE
+
+        except socket.error as error:
+            print(error)
+            return ERR_SOCKET_EXCEPTION, error
+    
+    def encryptClientAuth(self):
+
+        try: 
             timestamp = int(time())
             # generate session key
             self.session_key = get_random_bytes(32)
@@ -68,12 +84,16 @@ class Client():
             cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
             ciphertext = cipher.encrypt(auth_msg)
 
-            # send id message
-            self.comm_socket.send(INIT_MESSAGE.encode('utf-8'))
-            # send encrypted nonce and key
             self.comm_socket.send(ciphertext)
 
-            # get nonce back
+            return STEP_RETURN_2, ciphertext
+        except socket.error as error:
+            print(error)
+            return ERR_SOCKET_EXCEPTION, error
+
+    def waitAuthResponse(self):
+        # get nonce back
+        try: 
             data = self.comm_socket.recv(BUFFER_SIZE)
             timestamp = int(time())
             cipher = AES.new(self.secret_key, AES.MODE_EAX, struct.pack(">ix", timestamp))
@@ -81,23 +101,20 @@ class Client():
             (ret_timestamp, ) = struct.unpack(">i", plaintext[0:4])
             # time skew? offer 3 seconds???
             # this clock skew check is not correct
-            if ret_timestamp <= timestamp + 3:
+            if timestamp <= ret_timestamp <= timestamp + 3:
                 print("authenticated server")
                 # use returned nonce + 1 for the client side decrypt cipher
                 self.decrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
                 # use original nonce for the client side encrypt cipher
                 self.encrypt_cipher = AES.new(self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
                 return OK_AUTHENTICATED, "Server Auth OK"
-            # TODO: what happens if not authenticated?
+            # TODO: FIX AUTHENTICATION OF SERVER HERE!!!
 
             print(ret_timestamp)
         except socket.error as error:
             print(error)
             return ERR_SOCKET_EXCEPTION, error
 
-            # TODO move this to after comm is finished
-            # self.comm_socket.close()
-        
 
     def send_data(self, data_to_send=None):
         if self.comm_socket is None or self.session_key is None or self.TCP_IP is None:
@@ -113,12 +130,15 @@ class Client():
             return INVALID_DATA
 
         client_to_send = data_to_send.encode('utf-8')
-        print('client send plaintext: ', client_to_send)
         ciphertext = self.encrypt_cipher.encrypt(data_to_send.encode('utf-8'))
-        print('client send ciphertext: ', ciphertext)
-        self.comm_socket.send(ciphertext)
-        # TODO: implement received data: 
 
+        try:
+            self.comm_socket.send(ciphertext)
+            return OK_SENT_MESSAGE, ciphertext
+        except socket.error as error:
+            print(error)
+            return ERR_SOCKET_EXCEPTION, error
+            
     def receive_data(self):
 
         if self.comm_socket is None: 
