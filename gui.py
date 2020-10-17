@@ -226,6 +226,7 @@ class ClientPage(tk.Frame):
             else:
                 # TODO do a popup connection closed
                 # in this case go back to the main server menu
+                print("Not received: ", status,received_val)
                 pass
 
 
