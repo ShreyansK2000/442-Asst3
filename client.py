@@ -70,6 +70,7 @@ class Client():
 
         try:
             timestamp = int(time())
+            self.nonce = timestamp
             # generate session key
             self.session_key = get_random_bytes(32)
             print('client session key', self.session_key)
@@ -114,7 +115,7 @@ class Client():
                     self.session_key, AES.MODE_EAX,  struct.pack(">ix", ret_timestamp))
                 # use original nonce for the client side encrypt cipher
                 self.encrypt_cipher = AES.new(
-                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp))
+                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", self.nonce))
                 return OK_AUTHENTICATED, "Server Auth OK"
             # TODO: FIX AUTHENTICATION OF SERVER HERE!!!
 
@@ -141,11 +142,9 @@ class Client():
         self.mac.update(client_to_send)
         ciphertext = self.encrypt_cipher.encrypt(
             self.mac.digest() + data_to_send.encode('utf-8'))
-        # TODO: implement received data:
 
         try:
             self.comm_socket.send(ciphertext)
-            print('client send ciphertext: ', ciphertext)
 
             return OK_SENT_MESSAGE, ciphertext
         except socket.error as error:

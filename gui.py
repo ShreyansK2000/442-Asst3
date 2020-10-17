@@ -14,7 +14,7 @@ class VPN(tk.Tk):
         tk.Tk.__init__(self)
 
         self.title('VPN')
-        self.geometry("400x200")
+        self.geometry("650x200")
 
         # The container - parent frame
         container = ttk.Notebook(self)
