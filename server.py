@@ -225,19 +225,21 @@ class Server:
 
         if self.client_connection is None:
             print("Authenticated Communication non established")
-            return INVALID_RECV_REQ, "Authenticated Communication not established"
+            return INVALID_RECV_REQ, "Authenticated Communication not established", "None"
 
         try:
             recv_data = self.client_connection.recv(BUFFER_SIZE)
+            print("server received ciphertext", recv_data)
             plaintext = self.decrypt_cipher.decrypt(recv_data)
+            print("server plaintext", plaintext)
             recv_mac = plaintext[0:32]
             msg = plaintext[32:]
             self.mac.update(msg)
             self.mac.verify(recv_mac)
-            return OK_RECEIVED_MESSAGE, msg.decode('utf-8')
+            return OK_RECEIVED_MESSAGE, msg.decode('utf-8'), recv_data
         except ValueError:
-            return ERR_HMAC_EXCEPTION, "HMAC signature does not match"
+            return ERR_HMAC_EXCEPTION, "HMAC signature does not match", "None"
         except socket.error as error:
-            return ERR_SOCKET_EXCEPTION, error
+            return ERR_SOCKET_EXCEPTION, error, "None"
 
     # conn.close()

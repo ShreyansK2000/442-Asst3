@@ -172,7 +172,7 @@ class ClientPage(tk.Frame):
         elif self.step_num <= 3:
             print("Client Step number: ",self.step_num)
             self.status, message = self.client.execute(True,self.step_num )
-            print(message)
+            print('message', message)
             self.labeldata2.config(text = message)
             self.step_num += 1
         
@@ -204,7 +204,8 @@ class ClientPage(tk.Frame):
     # once the authentication finishes
     def send(self):
         self.data_to_send = self.entries[3].get()
-        self.client.send_data(self.data_to_send)
+        status, cipher = self.client.send_data(self.data_to_send)
+        self.labeldata2.config(text = cipher)
         # TODO update GUI telling that data sent
 
     def recv(self):
@@ -218,9 +219,10 @@ class ClientPage(tk.Frame):
             # # TODO update GUI label with received_val
             # label6.config(text=str(received_val))
 
-            status, received_val = self.client.receive_data()
+            status, received_val, cipher = self.client.receive_data()
             if status is OK_RECEIVED_MESSAGE:
                 label6.config(text=str(received_val))
+                self.labeldata2.config(text = cipher)
             else:
                 # TODO do a popup connection closed
                 # in this case go back to the main server menu
@@ -355,7 +357,8 @@ class ServerPage(tk.Frame):
 
     def send(self):
         self.data_to_send = self.entries[2].get()
-        self.server.send_data(self.data_to_send)
+        status, cipher = self.server.send_data(self.data_to_send)
+        self.labeldata2.config(text = cipher)
         # TODO update GUI telling that data sent
 
     def recv(self):
@@ -364,9 +367,10 @@ class ServerPage(tk.Frame):
         label5 = tk.Label(self, text="No data")
         label5.grid(row=4, column=1)
         while True:
-            status, received_val = self.server.receive_data()
+            status, received_val, cipher = self.server.receive_data()
             if status is OK_RECEIVED_MESSAGE:
                 label5.config(text=str(received_val))
+                self.labeldata2.config(text = cipher)
             else:
                 # TODO do a popup connection closed
                 # in this case go back to the main server menu

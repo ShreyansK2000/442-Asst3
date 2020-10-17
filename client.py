@@ -139,6 +139,8 @@ class Client():
 
         try:
             self.comm_socket.send(ciphertext)
+            print('client send ciphertext: ', ciphertext)
+
             return OK_SENT_MESSAGE, ciphertext
         except socket.error as error:
             print(error)
@@ -148,7 +150,7 @@ class Client():
 
         if self.comm_socket is None: 
             print("Authenticated Communication non established")
-            return INVALID_RECV_REQ, "Authenticated Communication non established"
+            return INVALID_RECV_REQ, "Authenticated Communication non established", "None"
 
         try:
             recv_data = self.comm_socket.recv(BUFFER_SIZE)
@@ -157,11 +159,11 @@ class Client():
             msg = plaintext[32:]
             self.mac.update(msg)
             self.mac.verify(recv_mac)
-            return OK_RECEIVED_MESSAGE, msg.decode('utf-8')
+            return OK_RECEIVED_MESSAGE, msg.decode('utf-8'), recv_data
         except ValueError:
-            return ERR_HMAC_EXCEPTION, "HMAC signature does not match"
+            return ERR_HMAC_EXCEPTION, "HMAC signature does not match", "None"
         except socket.error as error:
-            return ERR_SOCKET_EXCEPTION, error
+            return ERR_SOCKET_EXCEPTION, error, "None"
 
 
         
