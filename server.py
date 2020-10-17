@@ -173,15 +173,15 @@ class Server:
                 print("authenticated client")
 
                 # return nonce + 1
-                auth_return = struct.pack(">ix", int(time()) + 1)
                 timestamp = int(time())
+                auth_return = struct.pack(">ix", timestamp + 1)
                 cipher = AES.new(self.secret_key, AES.MODE_EAX,
                                  struct.pack(">ix", timestamp))
                 ciphertext = cipher.encrypt(auth_return)
                 self.conn.send(ciphertext)
 
                 self.encrypt_cipher = AES.new(
-                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", self.nonce + 1))
+                    self.session_key, AES.MODE_EAX,  struct.pack(">ix", timestamp + 1))
                 # use the initial nonce for the server side decrypt cipher
                 self.decrypt_cipher = AES.new(
                     self.session_key, AES.MODE_EAX,  struct.pack(">ix", self.nonce))
