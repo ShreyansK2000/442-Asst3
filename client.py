@@ -2,7 +2,7 @@ import socket
 from Crypto.Cipher import AES, PKCS1_OAEP
 from Crypto.PublicKey import RSA
 from Crypto.Random import get_random_bytes
-from Crypto.Hash import SHA256
+from Crypto.Hash import SHA256, HMAC
 import base64
 from time import time
 import struct
@@ -26,20 +26,15 @@ class Client():
 
         self.TCP_IP = TCP_IP
         self.TCP_PORT = int(TCP_PORT)
+        # establish HMAC using secret value
+        self.mac = HMAC.new(secret_key.encode('utf-8'), digestmod=SHA256)
+
         hash_object = SHA256.new()
         hash_object.update(secret_key.encode('utf-8'))
         self.secret_key = hash_object.digest()
         print('client hashed secret key', self.secret_key)
 
-        
         INIT_MESSAGE = "I_AM_CLIENT"
-
-        # get shared secret
-        # TODO this is inputted by the TA in GUI
-        # file_in = open("keys/shared-secret.bin", "rb")
-        # secret_key = file_in.read(32)
-        # file_in.close()
-
         
         print('client app printing secret key', self.secret_key)
 
@@ -114,8 +109,8 @@ class Client():
 
         client_to_send = data_to_send.encode('utf-8')
         print('client send plaintext: ', client_to_send)
-        ciphertext = self.encrypt_cipher.encrypt(data_to_send.encode('utf-8'))
-        print('client send ciphertext: ', ciphertext)
+        self.mac.update(client_to_send)
+        ciphertext = self.encrypt_cipher.encrypt(self.mac.digest() + data_to_send.encode('utf-8'))
         self.comm_socket.send(ciphertext)
         # TODO: implement received data: 
 
@@ -127,7 +122,14 @@ class Client():
 
         try:
             recv_data = self.comm_socket.recv(BUFFER_SIZE)
-            return OK_RECEIVED_MESSAGE, self.decrypt_cipher.decrypt(recv_data).decode('utf-8')
+            plaintext = self.decrypt_cipher.decrypt(recv_data)
+            recv_mac = plaintext[0:32]
+            msg = plaintext[32:]
+            self.mac.update(msg)
+            self.mac.verify(recv_mac)
+            return OK_RECEIVED_MESSAGE, msg.decode('utf-8')
+        except ValueError:
+            return ERR_HMAC_EXCEPTION, "HMAC signature does not match"
         except socket.error as error:
             return ERR_SOCKET_EXCEPTION, error
 
